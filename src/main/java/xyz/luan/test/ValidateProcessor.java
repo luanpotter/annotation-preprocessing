@@ -1,18 +1,20 @@
 package xyz.luan.test;
 
-import javax.annotation.processing.AbstractProcessor;
-import javax.annotation.processing.Messager;
-import javax.annotation.processing.ProcessingEnvironment;
-import javax.annotation.processing.RoundEnvironment;
+import com.google.auto.service.AutoService;
+
+import javax.annotation.processing.*;
 import javax.lang.model.SourceVersion;
+import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
+import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.tools.Diagnostic;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 import static java.util.Collections.singletonList;
 
+@AutoService(Processor.class)
 public class ValidateProcessor extends AbstractProcessor {
 
     private Messager messager;
@@ -24,7 +26,7 @@ public class ValidateProcessor extends AbstractProcessor {
 
     @Override
     public Set<String> getSupportedAnnotationTypes() {
-        return new HashSet<>(singletonList(Validate.class.getCanonicalName()));
+        return new LinkedHashSet<>(singletonList(Validate.class.getCanonicalName()));
     }
 
     @Override
@@ -33,17 +35,24 @@ public class ValidateProcessor extends AbstractProcessor {
     }
 
     @Override
-    public boolean process(Set<? extends TypeElement> set, RoundEnvironment roundEnvironment) {
-        for (TypeElement element : set) {
+    public boolean process(Set<? extends TypeElement> set, RoundEnvironment roundEnv) {
+        for (Element element : roundEnv.getElementsAnnotatedWith(Validate.class)) {
             if (element.getKind() == ElementKind.CLASS) {
                 element.getEnclosedElements().stream()
                         .filter(e -> e.getKind() == ElementKind.FIELD)
                         .forEach(f -> {
                             String fieldName = f.getSimpleName().toString();
-                            messager.printMessage(Diagnostic.Kind.ERROR, "Invalid field name: " + fieldName);
+                            boolean constant = f.getModifiers().contains(Modifier.STATIC) || f.getModifiers().contains(Modifier.FINAL);
+                            if (!constant && !isCamelCase(fieldName)) {
+                                messager.printMessage(Diagnostic.Kind.ERROR, "Invalid field name: " + fieldName);
+                            }
                         });
             }
         }
         return true;
+    }
+
+    private boolean isCamelCase(String value) {
+        return Character.isLowerCase(value.charAt(0));
     }
 }
