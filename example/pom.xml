@@ -6,10 +6,6 @@
 	<version>1.0-SNAPSHOT</version>
 	<packaging>jar</packaging>
 
-	<prerequisites>
-		<maven>3.2.2</maven>
-	</prerequisites>
-
 	<name>example</name>
 
 	<properties>
