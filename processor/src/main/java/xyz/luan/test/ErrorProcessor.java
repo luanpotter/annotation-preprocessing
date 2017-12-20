@@ -5,6 +5,7 @@ import com.google.auto.service.AutoService;
 import javax.annotation.processing.*;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.ElementKind;
+import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.tools.Diagnostic;
 import java.util.Collections;
@@ -38,6 +39,7 @@ public class ErrorProcessor extends AbstractProcessor {
 				.filter(e -> e.getKind() == ElementKind.CLASS)
 				.flatMap(e -> e.getEnclosedElements().stream())
 				.filter(e -> e.getKind() == ElementKind.FIELD)
+				.filter(e -> !e.getModifiers().contains(Modifier.STATIC) && !e.getModifiers().contains(Modifier.FINAL))
 				.forEach(e -> {
 					String name = e.getSimpleName().toString();
 					if (!isCamelCase(name)) {
