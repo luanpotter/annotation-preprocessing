@@ -2,18 +2,24 @@ package xyz.luan.test;
 
 import com.google.auto.service.AutoService;
 
-import javax.annotation.processing.AbstractProcessor;
-import javax.annotation.processing.Processor;
-import javax.annotation.processing.RoundEnvironment;
+import javax.annotation.processing.*;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.TypeElement;
+import javax.tools.Diagnostic;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
 @AutoService(Processor.class)
 public class ErrorProcessor extends AbstractProcessor {
+
+	private Messager messager;
+
+	@Override
+	public synchronized void init(ProcessingEnvironment processingEnv) {
+		messager = processingEnv.getMessager();
+	}
 
 	@Override
 	public SourceVersion getSupportedSourceVersion() {
@@ -34,8 +40,14 @@ public class ErrorProcessor extends AbstractProcessor {
 				.filter(e -> e.getKind() == ElementKind.FIELD)
 				.forEach(e -> {
 					String name = e.getSimpleName().toString();
-					System.out.println(name);
+					if (!isCamelCase(name)) {
+						messager.printMessage(Diagnostic.Kind.ERROR, "Invalid field name; must be camelCase; found: " + name, e);
+					}
 				});
 		return true;
+	}
+
+	private boolean isCamelCase(String name) {
+		return Character.isLowerCase(name.charAt(0));
 	}
 }
