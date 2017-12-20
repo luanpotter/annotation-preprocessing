@@ -6,6 +6,7 @@ import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.Processor;
 import javax.annotation.processing.RoundEnvironment;
 import javax.lang.model.SourceVersion;
+import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.TypeElement;
 import java.util.Collections;
 import java.util.HashSet;
@@ -26,7 +27,15 @@ public class ErrorProcessor extends AbstractProcessor {
 
 	@Override
 	public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
-		// TODO impl this
-		return false;
+		roundEnv.getElementsAnnotatedWith(Error.class)
+				.stream()
+				.filter(e -> e.getKind() == ElementKind.CLASS)
+				.flatMap(e -> e.getEnclosedElements().stream())
+				.filter(e -> e.getKind() == ElementKind.FIELD)
+				.forEach(e -> {
+					String name = e.getSimpleName().toString();
+					System.out.println(name);
+				});
+		return true;
 	}
 }
